@@ -74,17 +74,18 @@ void setup() {
   void loop()
   {
    String outgoingMessage="";
+   String newDance ="";
   long currTime = millis();
   bool passed;
   int elapsedTime =0;
   if(!finishedTests)
   {
-    /*
+    
     robotcmd.currState = RBT_IDLE;
     robotcmd.commandTimeout = 1000; //set it so we don't wait so long
     delay(robotcmd.commandTimeout+100);
     currTime=millis();
-    
+    /*
 	//Test 1
 	Serial.print(F(" Test 1 - Testing if MARCO sent when robot is idle"));
 	outgoingMessage = robotcmd.update(currTime,"");
@@ -95,8 +96,8 @@ void setup() {
 
 	//Test 2
   Serial.print(F(" Test 2 - Testing if Dance Received after Receiving Polo"));
-	outgoingMessage = robotcmd.update(currTime,String(RobotCmd::POLO));
-  passed = outgoingMessage[0] == RobotCmd::SONG
+	newDance = robotcmd.update(currTime,String(RobotCmd::POLO));
+  passed = newDance[0] == RobotCmd::SONG
         && robotcmd.currState == RBT_DANCE;
   Serial.println(passed?testPassed:testFailed);
 
@@ -104,7 +105,7 @@ void setup() {
 	//Test 3
  Serial.print(F(" Test 3 - Testing if Song & Dance performed"));
 	robotcmd.currState = RBT_WAIT_DANCE;
-	outgoingMessage = robotcmd.update(currTime,outgoingMessage.c_str());
+	outgoingMessage = robotcmd.update(currTime,newDance.c_str());
   passed = outgoingMessage == ""
         && robotcmd.currState == RBT_DANCE;
   int Danced = 0;
@@ -172,7 +173,7 @@ void setup() {
   Serial.println(passed?testPassed:testFailed);
 
 
-*/
+
   //Test 6 
   Serial.print(F(" Test 6 - Testing if robot goes Idle -  if robot never receives DANCE after sending POLO "));
   robotcmd.currState = RBT_IDLE;
@@ -198,14 +199,70 @@ void setup() {
   Serial.print(F(" Test 6b - Send up DANCE when robot is IDLE ensure that robot does not dance"));
     String newSong = robotcmd.singer.createSong(0,50);
     String newDance = robotcmd.dancer.createDance();
+    String entireMessage = RobotCmd::SONG+newSong+RobotCmd::DANCE+newDance;
     robotcmd.lastCommandSent = millis();
-    outgoingMessage = robotcmd.update(millis(), String(RobotCmd::SONG+newSong+RobotCmd::DANCE+newDance));
-    passed = outgoingMessage == ""
-      && robotcmd.currState == RBT_IDLE;
+    outgoingMessage = robotcmd.update(millis(), entireMessage);
+    passed = outgoingMessage == "" && robotcmd.currState == RBT_IDLE;
   Serial.println(passed?testPassed:testFailed);
-      
 
-      
+
+  Serial.print(F(" Test 7 - Testing if robot runs away when danger message sent"));
+  robotcmd.currState = RBT_IDLE;
+  robotcmd.commandTimeout = 5000;
+  outgoingMessage = robotcmd.update(millis(),String(RobotCmd::DANGER)); //ensure we get MARCO
+  outgoingMessage ="";
+  int initialState = robotcmd.currState;
+  long timeRunningAway = robotcmd.dangerTime;
+  long timeHiding =  robotcmd.dangerTime;
+  long timeReturning = robotcmd.dangerTime;
+  int currMotorState = robotcmd.motor.motorState;
+  
+  while(robotcmd.currState == RBT_DANGER
+    && outgoingMessage == "")
+  {
+    timeRunningAway =  currMotorState == STATE_BACKWARD &&  currMotorState != robotcmd.motor.motorState
+              ?millis() - timeRunningAway
+              :timeRunningAway;
+    timeHiding = currMotorState == STATE_IDLE &&  currMotorState != robotcmd.motor.motorState
+              ?millis() - timeHiding
+              :timeHiding;
+    currMotorState = robotcmd.motor.motorState;
+    outgoingMessage = robotcmd.update(millis(),"");
+    timeReturning =  robotcmd.currState != RBT_DANGER
+              ?millis() - timeReturning
+              :timeReturning;             
+    delay(100);
+  }
+  
+  passed = initialState == RBT_DANGER
+    && outgoingMessage==""
+    && robotcmd.currState == RBT_IDLE
+    && timeRunningAway >  robotcmd.dangerNear
+    && timeHiding >  robotcmd.dangerCautious
+    && timeReturning >  robotcmd.dangerOver;
+ Serial.println(passed?testPassed:testFailed);
+
+
+*/
+  Serial.print(F(" Test 8 - Testing if robot runs away when danger occurs in middle of dance"));
+   robotcmd.currState = RBT_WAIT_POLO;
+   newDance = robotcmd.update(currTime,String(RobotCmd::POLO));
+   int dangerDelay = 3000;
+   robotcmd.currState = RBT_WAIT_DANCE;
+    robotcmd.update(currTime,newDance);
+   while(  (millis() -robotcmd.lastCommandSent )<dangerDelay ){
+    delay(100);
+    robotcmd.update(millis(),"");
+   }
+   outgoingMessage = robotcmd.update(currTime,String(RobotCmd::DANGER));
+   passed = robotcmd.currState == RBT_DANGER
+          && !robotcmd.dancer.dancing
+          && robotcmd.motor.motorState == STATE_BACKWARD
+          && robotcmd.singer.getCurrSongIx()> robotcmd.singer.songLen;
+    Serial.println(passed?testPassed:testFailed);
+     
+    robotcmd.update(millis(),"");
+   
   finishedTests = true;
 	}
  

@@ -42,16 +42,16 @@ class RobotCmd{
 	long currTimeout; //the random timeout before we send Marco message out after danger
 	int safeFeeling; //how safe the robot feels - determines the type of song it sings
 	long lastCommandSent; //the time we sent the last command (like MARCO)
+	long dangerTime;
 	
 	Singer singer; //pushes notes to piezo buzzer
 	Dancer dancer; //changes motor state so the robot can dance
+	Motor motor;
 	
 	protected:
 	char dir; //need to get rid of this once we figure out what to do when 
-	Motor motor;
 	RoboAccelerometer accel;
 	
-	long dangerTime;
 
 	String processMessage(String incomingMessage, long currTime);
 	bool detectNewDanger(char* incomingMessage,long currTime);

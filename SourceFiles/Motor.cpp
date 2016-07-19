@@ -224,8 +224,7 @@ void Motor::Forward(int speed){
 	if(speed<1 || speed>255){
 		return;
 	}
-	
-	Stop();
+
 	motor(1, FORWARD, speed);
 	motor(2, FORWARD, speed);
 	motor(4, FORWARD, speed);
@@ -238,7 +237,6 @@ void Motor::Backward(int speed){
 		return;
 	}
 	
-	Stop();
 	motor(1, BACKWARD, speed);
 	motor(2, BACKWARD, speed);
 	motor(4, BACKWARD, speed);
@@ -278,6 +276,7 @@ void Motor::update(long currTime)
 	}
 	if(motorState == STATE_FORWARD)
 	{
+		Serial.println(FAST);
 		Forward(FAST);
 	}
 	if(motorState == STATE_BACKWARD)

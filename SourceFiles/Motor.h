@@ -35,7 +35,7 @@
 #define LEFT 0
 #define RIGHT 1
 
-#define FAST 180
+#define FAST 225
 #define SLOW 50
 #define HALF_SPEED 125
 

@@ -30,7 +30,7 @@
 RobotCmd::RobotCmd(){
 	dangerNear = 5000;
 	dangerCautious = 9000;
-	dangerOver = 15000;
+	dangerOver = 19000;
 	commandTimeout = 15000;
 
 	stateChanged = 0;
@@ -56,12 +56,11 @@ void RobotCmd::setup(int buzzerPin) {
   
   String RobotCmd::update(long currTime,String incomingMessage )
   {
-	accel.update(currTime);
+//	accel.update(currTime);
 	//Serial.print ("... accel...");
 	//Serial.print ("... process...");
 	dancer.update(currTime);
 	singer.update(currTime); 
-	//Serial.print ("... singer...");
 	//motor.update(currTime);
 	//Serial.print ("... motor...");
 	String outGoingMessage =processMessage(incomingMessage,currTime); 
@@ -80,8 +79,7 @@ String RobotCmd::processMessage(String incomingMessage, long currTime)
   
  if( processDanger(currTime))
  {
-  Serial.println("process Danger");
-  return String("");
+	return "";
  }
  
   if(accel.collision){
@@ -161,15 +159,17 @@ bool RobotCmd::processDanger(long currTime)
   bool processed = false;
   if(currState== RBT_DANGER )
   {
-    if((currTime - dangerTime) >dangerNear){ //1st stage after running away
+    if((currTime - dangerTime) >dangerNear
+	&& motor.motorState == STATE_BACKWARD){ //1st stage after running away
       motor.Stop();
       motor.setState(STATE_IDLE);
     }
-    if((currTime - dangerTime) >dangerCautious){ //2nd stage creep back slowly
-      motor.setState(dir=='f'?STATE_FORWARD:STATE_BACKWARD);
-      motor.motorSpeed = SLOW;
+    if((currTime - dangerTime) >dangerCautious
+     	&& motor.motorState == STATE_IDLE){ //2nd stage creep back slowly
+	  motor.Stop();
+      motor.setState(STATE_FORWARD);
     }
-    if((currTime - dangerTime) >dangerOver){ //3rd stage being playing
+    if((currTime - dangerTime) > dangerOver){ //3rd stage being playing
       motor.setState(STATE_IDLE);
       motor.Stop();
       currState = RBT_IDLE;
@@ -186,12 +186,12 @@ bool RobotCmd::detectNewDanger(char* incomingMessage,long currTime)
 {
   if(currState!= RBT_DANGER )
   {
-    if(incomingMessage[0]=='d' || accel.attacked)
+    if(incomingMessage[0]== RobotCmd::DANGER || accel.attacked)
     {
       singer.stop();
       dancer.stop();
       motor.motorSpeed =FAST;
-      motor.setState(dir=='f'?STATE_FORWARD:STATE_BACKWARD);
+      motor.setState(STATE_BACKWARD);
       currState = RBT_DANGER;
       dangerTime = currTime;
       return true;
