@@ -6,6 +6,7 @@
 		buzzerPin = 13;
 		currSongIx = 0;
 		lastPlay =0 ;
+		singing = false;
 	}
 	
 	void Singer::setup(int buzzPin)
@@ -53,12 +54,6 @@
 		duration =  duration<50? 50:duration;  
 		durationBar[i] = duration;
 		durationStr = durationStr+delim+duration;
-/*		
-		    Serial.print(" zznote ");
-		Serial.print(noteIxBar[i]);
-		Serial.print("zz delay ");
-		Serial.println(durationBar[i]);
-   */
 	  }
 	  String fullSong = noteIxStr+sep+durationStr;
 	  return fullSong.c_str();
@@ -86,9 +81,12 @@
 			durationBar[i] = pauseMillis;
 			i++;
 		}
+
 		delete note;
 		delete noteHold;
-		currSongIx =0;
+		currSongIx =i<2?songLen:0;
+		singing = currSongIx ==0;
+
 	}
 
 	
@@ -96,6 +94,7 @@
 	{
 		noTone(buzzerPin);
 		currSongIx= songLen+1;
+		singing = false;
 	}
 	
 void Singer::update(long currTime)
@@ -115,6 +114,7 @@ void Singer::update(long currTime)
 			 currSongIx++;
 			 }else{	
 				noTone(buzzerPin);
+				singing=false;
 			 }
 
 	  }

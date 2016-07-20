@@ -59,8 +59,8 @@ void RobotCmd::setup(int buzzerPin) {
 //	accel.update(currTime);
 	//Serial.print ("... accel...");
 	//Serial.print ("... process...");
-	dancer.update(currTime);
 	singer.update(currTime); 
+	dancer.update(currTime);
 	//motor.update(currTime);
 	//Serial.print ("... motor...");
 	String outGoingMessage =processMessage(incomingMessage,currTime); 
@@ -103,9 +103,11 @@ String RobotCmd::processMessage(String incomingMessage, long currTime)
     String newDance =dancer.createDance();
     return String(SONG+newSong+DANCE+newDance);
   }
+  
+ 
   if(currState == RBT_WAIT_DANCE && msg[0]==SONG)
   {
-  //  Serial.println("process SONG");
+   
 
     String sSep(SONG);
     String dSep(DANCE);
@@ -115,16 +117,17 @@ String RobotCmd::processMessage(String incomingMessage, long currTime)
     char * dance = new char[255* sizeof(char)];
     dance = strwrd ( msg,song,255* sizeof(char),dSep.c_str());
     //strip first char off of theDance and song and everything is correct; or handle it within the routine
-    singer.playSong(const_cast<char*>(song+1));
-    dancer.performDance(const_cast<char*>(dance+1));
+	singer.playSong(const_cast<char*>(song+1));
+	dancer.performDance(const_cast<char*>(dance+1));
     currState = RBT_DANCE;
+	
     return "";
   }
-  
+
   //we just finished dancing
   if(currState == RBT_DANCE)
   {
-	if( !dancer.dancing)
+	if( !dancer.dancing && !singer.singing)
 	{
 		currState = RBT_IDLE;
 		freeTime = rand() *1000;//set the time before we connect to other robot

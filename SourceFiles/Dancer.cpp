@@ -56,10 +56,14 @@
 	
 	void Dancer::performDance(char* newDance)
 	{
+		if(strlen(dance)<actionLen){
+			stop();
+			return;
+		}
 		memcpy(dance,newDance,2*danceLen* sizeof(char));
 		currDanceIx =0;
 		currPause =0;
-   dancing = true;
+		dancing = true;
 	}
 	
 	void Dancer::stop()
@@ -67,7 +71,7 @@
 		motor.setState(STATE_IDLE);
 		currDanceIx= danceLen*2 +1;
 		currPause =0;
-    dancing= false;
+		dancing= false;
 	}
 
 	
@@ -77,16 +81,13 @@ void Dancer::update(long currTime)
 	  {
 			if( (currDanceIx +1)<(danceLen*2))
 			{
+		
 			  char action= dance[currDanceIx];
         int newMotorState = action=='1'?STATE_FORWARD
-                                    :action=='2'
-                                    ?STATE_COLLISION
-                                    :action=='3'
-                                    ?STATE_TURN_RIGHT
-                                    :action=='4'
-                                    ?STATE_TURN_LEFT
-                                    :action='5'
-                                    ?STATE_BACKWARD
+                                    :action=='2'?STATE_COLLISION
+                                    :action=='3'?STATE_TURN_RIGHT
+                                    :action=='4'?STATE_TURN_LEFT
+                                    :action=='5'?STATE_BACKWARD
                                     :STATE_IDLE;
 				motor.setState(newMotorState);
         
@@ -101,12 +102,7 @@ void Dancer::update(long currTime)
 				            ?4000
 				            :2500;
 				lastPlay = currTime;
-				/*
-        Serial.print("action: ");
-        Serial.print(action);
-        Serial.print("  currPpause:");
-        Serial.println(currPause);
-		*/
+				
         currDanceIx = currDanceIx+2;
 			 }else if (dancing){
         stop();

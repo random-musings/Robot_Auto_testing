@@ -73,8 +73,13 @@ void setup() {
   
   void loop()
   {
+    int note,motorState;
+    int Danced=0;
+    int Sang=0;
    String outgoingMessage="";
    String newDance ="";
+   String newSong="";
+   String entireMessage = "";
   long currTime = millis();
   bool passed;
   int elapsedTime =0;
@@ -108,12 +113,12 @@ void setup() {
 	outgoingMessage = robotcmd.update(currTime,newDance.c_str());
   passed = outgoingMessage == ""
         && robotcmd.currState == RBT_DANCE;
-  int Danced = 0;
-  int Sang = 0;
+  Danced = 0;
+  Sang = 0;
   while(robotcmd.currState != RBT_IDLE)
   {
-    int note = robotcmd.singer.getCurrSongIx();
-    int motorState = robotcmd.dancer.motor.motorState;
+    note = robotcmd.singer.getCurrSongIx();
+    motorState = robotcmd.dancer.motor.motorState;
 		delay(100);
     robotcmd.update(millis(),"");
     Sang += note != robotcmd.singer.getCurrSongIx()?1:0;
@@ -173,7 +178,6 @@ void setup() {
   Serial.println(passed?testPassed:testFailed);
 
 
-
   //Test 6 
   Serial.print(F(" Test 6 - Testing if robot goes Idle -  if robot never receives DANCE after sending POLO "));
   robotcmd.currState = RBT_IDLE;
@@ -197,16 +201,16 @@ void setup() {
 
   //Test 6b
   Serial.print(F(" Test 6b - Send up DANCE when robot is IDLE ensure that robot does not dance"));
-    String newSong = robotcmd.singer.createSong(0,50);
-    String newDance = robotcmd.dancer.createDance();
-    String entireMessage = RobotCmd::SONG+newSong+RobotCmd::DANCE+newDance;
+    newSong = robotcmd.singer.createSong(0,50);
+    newDance = robotcmd.dancer.createDance();
+    entireMessage = RobotCmd::SONG+newSong+RobotCmd::DANCE+newDance;
     robotcmd.lastCommandSent = millis();
     outgoingMessage = robotcmd.update(millis(), entireMessage);
     passed = outgoingMessage == "" && robotcmd.currState == RBT_IDLE;
   Serial.println(passed?testPassed:testFailed);
 
 
-  Serial.print(F(" Test 7 - Testing if robot runs away when danger message sent"));
+  Serial.print(F(" Test 7 - DANGER Testing, robot should run when danger message sent"));
   robotcmd.currState = RBT_IDLE;
   robotcmd.commandTimeout = 5000;
   outgoingMessage = robotcmd.update(millis(),String(RobotCmd::DANGER)); //ensure we get MARCO
@@ -243,8 +247,8 @@ void setup() {
  Serial.println(passed?testPassed:testFailed);
 
 
-*/
-  Serial.print(F(" Test 8 - Testing if robot runs away when danger occurs in middle of dance"));
+
+  Serial.print(F(" Test 8 - DANGER Testing, robot should run when danger occurs in middle of dance"));
    robotcmd.currState = RBT_WAIT_POLO;
    newDance = robotcmd.update(currTime,String(RobotCmd::POLO));
    int dangerDelay = 3000;
@@ -262,7 +266,135 @@ void setup() {
     Serial.println(passed?testPassed:testFailed);
      
     robotcmd.update(millis(),"");
+
+     Serial.print(F(" Test 9 - DANGER Testing, robot should send DANGER message if it is hit"));
+   robotcmd.currState = RBT_WAIT_POLO;
+   newDance = robotcmd.update(currTime,String(RobotCmd::POLO));
+   int dangerDelay = 3000;
+   robotcmd.accel.attacked=true;
+  
    
+   outgoingMessage = robotcmd.update(millis(),"");
+   passed = robotcmd.currState == RBT_DANGER
+          && outgoingMessage[0] == RobotCmd::DANGER
+          && !robotcmd.dancer.dancing
+          && robotcmd.singer.getCurrSongIx()> robotcmd.singer.songLen;
+    Serial.println(passed?testPassed:testFailed);
+     
+
+        //send down Bad Song
+         Serial.print(F(" Test 10 - BAD SONG  - Testing, robot should skip invalid notes"));
+         Danced=0;
+         Sang = 0;
+        robotcmd.currState = RBT_WAIT_DANCE;
+        robotcmd.commandTimeout = 5000;
+        newSong = robotcmd.singer.createSong(0,50);
+        newDance = robotcmd.dancer.createDance();
+        newSong[10]='a';
+        entireMessage = RobotCmd::SONG+newSong+RobotCmd::DANCE+newDance;
+          
+        outgoingMessage = robotcmd.update(millis(),entireMessage); //ensure we get MARCO
+        elapsedTime = robotcmd.lastCommandSent;
+        outgoingMessage ="";
+        while(robotcmd.dancer.dancing)
+        {
+          motorState = robotcmd.dancer.motor.motorState;
+          note = robotcmd.singer.getCurrSongIx();
+          outgoingMessage = robotcmd.update(millis(),"");
+          delay(100);  
+          Sang += note != robotcmd.singer.getCurrSongIx()?1:0;
+          Danced += motorState != robotcmd.dancer.motor.motorState?1:0;
+        }
+        Serial.println(Sang);
+        Serial.println(Danced);
+        passed = Danced >= robotcmd.dancer.danceLen
+        && Sang >= robotcmd.singer.songLen
+        && robotcmd.currState == RBT_IDLE;
+       Serial.println(passed?testPassed:testFailed);
+
+  
+
+        Serial.print(F(" Test 11 - BAD SONG  - robot should dance but not sing if no song provided"));
+         Danced=0;
+         Sang = 0;
+        robotcmd.currState = RBT_WAIT_DANCE;
+        robotcmd.commandTimeout = 5000;
+        newDance = robotcmd.dancer.createDance();
+        String noSongMessage = String(RobotCmd::SONG);
+        noSongMessage += String(RobotCmd::DANCE);
+        noSongMessage +=newDance;
+        outgoingMessage = robotcmd.update(millis(),noSongMessage); //ensure we get MARCO
+        while(robotcmd.dancer.dancing)
+        {
+          motorState = robotcmd.dancer.motor.motorState;
+          note = robotcmd.singer.getCurrSongIx();
+          outgoingMessage = robotcmd.update(millis(),"");
+          delay(100);  
+          Sang += note != robotcmd.singer.getCurrSongIx()?1:0;
+          Danced += motorState != robotcmd.dancer.motor.motorState?1:0;
+        }
+      
+        passed = Danced >= robotcmd.dancer.danceLen
+        && Sang ==0
+        && robotcmd.currState == RBT_IDLE;
+       Serial.println(passed?testPassed:testFailed);
+    
+
+      Serial.print(F(" Test 12 - BAD DANCE - robot should sing but not dance if no dance provided"));
+         Danced=0;
+         Sang = 0;
+        robotcmd.currState = RBT_WAIT_DANCE;
+        robotcmd.commandTimeout = 5000;
+        newDance = robotcmd.dancer.createDance();
+        String noDanceMessage = String(RobotCmd::SONG);
+        noDanceMessage += robotcmd.singer.createSong(0,50);
+        noDanceMessage += String(RobotCmd::DANCE);
+       
+        outgoingMessage = robotcmd.update(millis(),noDanceMessage); //ensure we get MARCO
+        while(robotcmd.currState==RBT_DANCE)
+        {
+          motorState = robotcmd.dancer.motor.motorState;
+          note = robotcmd.singer.getCurrSongIx();
+          outgoingMessage = robotcmd.update(millis(),"");
+          delay(100);  
+          Sang += note != robotcmd.singer.getCurrSongIx()?1:0;
+          Danced += motorState != robotcmd.dancer.motor.motorState?1:0;
+        }
+        passed = Danced==0
+        && Sang >= robotcmd.singer.songLen
+        && robotcmd.currState == RBT_IDLE;
+       Serial.println(passed?testPassed:testFailed);
+        
+*/
+Serial.print(F(" Test 13 - BAD DANCE - robot should pause dance if dance provides invalid commands "));
+         Danced=0;
+         Sang = 0;
+        robotcmd.currState = RBT_WAIT_DANCE;
+        robotcmd.commandTimeout = 5000;
+        newDance = robotcmd.dancer.createDance();
+        newDance[2]='a';
+        newDance[3]='b';
+        newDance[4]='f';
+       String badDanceMessage = String(RobotCmd::SONG);
+        badDanceMessage += robotcmd.singer.createSong(0,50);
+        badDanceMessage += String(RobotCmd::DANCE);
+        badDanceMessage += newDance;
+      
+        outgoingMessage = robotcmd.update(millis(),badDanceMessage); //ensure we get MARCO
+        while(robotcmd.currState==RBT_DANCE)
+        {
+          motorState = robotcmd.dancer.motor.motorState;
+          note = robotcmd.singer.getCurrSongIx();
+          outgoingMessage = robotcmd.update(millis(),"");
+          delay(100);  
+          Sang += note != robotcmd.singer.getCurrSongIx()?1:0;
+          Danced += motorState != robotcmd.dancer.motor.motorState?1:0;
+        }
+        passed = Danced>=1
+        && Sang >= robotcmd.singer.songLen
+        && robotcmd.currState == RBT_IDLE;
+       Serial.println(passed?testPassed:testFailed);
+         
   finishedTests = true;
 	}
  

@@ -14,11 +14,12 @@ class Singer
 		void update(long currTime);
 		const int songLen = 30;
 		int getCurrSongIx();
+		bool singing;
 
 		protected:
 		const char* delim=",";
 		const char* sep=":";
-
+	
 	protected:
 		long lastPlay;
 		char *  strwrd(char *s, char *buf, size_t len, char *delim);

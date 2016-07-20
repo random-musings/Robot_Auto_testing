@@ -44,13 +44,13 @@ class RobotCmd{
 	long lastCommandSent; //the time we sent the last command (like MARCO)
 	long dangerTime;
 	
+	RoboAccelerometer accel;
 	Singer singer; //pushes notes to piezo buzzer
 	Dancer dancer; //changes motor state so the robot can dance
 	Motor motor;
 	
 	protected:
 	char dir; //need to get rid of this once we figure out what to do when 
-	RoboAccelerometer accel;
 	
 
 	String processMessage(String incomingMessage, long currTime);

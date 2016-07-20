@@ -78,10 +78,11 @@ class Motor
 		void setState(int newState);
 		void update(long currTime);
 
-    
+		
 	private:
 		long state_last_change;
 		long wheel_last_change;
+		long lastUpdate ;
 		void setWheelState(int newState);
 		
 		void shiftWrite(int output, int high_low);

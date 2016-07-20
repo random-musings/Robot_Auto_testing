@@ -16,6 +16,7 @@
 	state_last_change = 0;
 	wheel_last_change  = 0;
 	motorSpeed= FAST;
+	lastUpdate =0;
 }
 
 
@@ -259,33 +260,37 @@ void Motor::setWheelState(int newState)
 
 void Motor::update(long currTime)
 {
-	if(motorState == STATE_COLLISION){
-		motorState = ( currTime-state_last_change )> 3000
-			?STATE_FORWARD
-			: STATE_COLLISION;
-		TurnRight(currTime);
-	}
-
-	if(motorState == STATE_TURN_RIGHT){
-		TurnRight(currTime);
-	}
 	
-	if( motorState == STATE_TURN_LEFT)
+	if( (currTime - lastUpdate) >10)
 	{
-		TurnLeft(currTime);
-	}
-	if(motorState == STATE_FORWARD)
-	{
-		Serial.println(FAST);
-		Forward(FAST);
-	}
-	if(motorState == STATE_BACKWARD)
-	{
-		Backward(FAST);
-	}
-	if(motorState == STATE_IDLE)
-	{
-		Stop();
+		if(motorState == STATE_COLLISION){
+			motorState = ( currTime-state_last_change )> 3000
+				?STATE_FORWARD
+				: STATE_COLLISION;
+			TurnRight(currTime);
+		}
+
+		if(motorState == STATE_TURN_RIGHT){
+			TurnRight(currTime);
+		}
+		
+		if( motorState == STATE_TURN_LEFT)
+		{
+			TurnLeft(currTime);
+		}
+		if(motorState == STATE_FORWARD)
+		{
+			Forward(FAST);
+		}
+		if(motorState == STATE_BACKWARD)
+		{
+			Backward(FAST);
+		}
+		if(motorState == STATE_IDLE)
+		{
+			Stop();
+		}
+		lastUpdate = currTime;
 	}
     
  
@@ -301,7 +306,7 @@ void Motor::TurnLeft(long currTime)
 		if(direction == STATE_FORWARD
 		||  wheelState ==WHEEL_STATE_FORWARD_LEFT)
 		{
-		
+			Stop();
 			motor(1, BACKWARD, FAST);
 			motor(2, BACKWARD, FAST);
 			motor(3, FORWARD, 0);
