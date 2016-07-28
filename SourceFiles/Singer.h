@@ -15,7 +15,7 @@ class Singer
 		const int songLen = 30;
 		int getCurrSongIx();
 		bool singing;
-
+		const int maxSafeFeeling = 50;
 		protected:
 		const char* delim=",";
 		const char* sep=":";

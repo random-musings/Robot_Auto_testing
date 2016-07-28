@@ -31,6 +31,15 @@ void RoboAccelerometer::init(int sampleSize,
 		movingTolerance = newMovingTolerance;
 		attackTolerance  =  newAttackTolerance;
 		accelShakeTimeout = newAccelShakeTimeout;
+/*		Serial.println("Accelerometer baseline");
+		Serial.print(accel_center_x);
+		Serial.print(",");
+		Serial.print(accel_center_y);
+		Serial.print(",");
+		Serial.print(accel_center_z);
+		Serial.print("  ");
+		Serial.println("______________");
+		*/
 	}
 		
 		
@@ -65,6 +74,13 @@ void RoboAccelerometer::init(int sampleSize,
       
 		  bool acc_shake = false;
 			acc.readGs(&aX, &aY, &aZ);
+			Serial.print(aX);
+			Serial.print(",");
+			Serial.print(aY);
+			Serial.print(",");
+			Serial.print(aZ);
+			Serial.print("  ");
+			
 			acc_shake = ( abs(abs(aY)- abs(accel_center_y)) >= movingTolerance
 			  || abs(abs(aZ)- abs(accel_center_z)) >= movingTolerance 
 			  || abs(abs(aX)- abs(accel_center_x)) >= movingTolerance);
@@ -76,6 +92,9 @@ void RoboAccelerometer::init(int sampleSize,
        attacked = (abs((abs(aY)- abs(accel_center_y))) >= attackTolerance
         || abs((abs(aX)- abs(accel_center_x))) >= attackTolerance
         || abs((abs(aZ)- abs(accel_center_z))) >= attackTolerance);
+		
+	
+		if(collision){ Serial.println(" Collision");}
         
 			lastReadShake   = acc_shake? currTime:lastReadShake;
 			moving  = acc_shake || (currTime -lastReadShake)< accelShakeTimeout;

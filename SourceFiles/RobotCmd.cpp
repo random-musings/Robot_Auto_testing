@@ -48,7 +48,7 @@ void RobotCmd::setup(int buzzerPin) {
 				 2000);     // long newAccelShakeTimeout);
 
 	  singer.setup(buzzerPin);
-	  dancer.setup(motor);
+	  dancer.setup(&motor);
 	  singer.stop();
 	  dancer.stop();
   }
@@ -56,13 +56,15 @@ void RobotCmd::setup(int buzzerPin) {
   
   String RobotCmd::update(long currTime,String incomingMessage )
   {
+//	Serial.print ("... accel...");
 //	accel.update(currTime);
-	//Serial.print ("... accel...");
-	//Serial.print ("... process...");
-	singer.update(currTime); 
-	dancer.update(currTime);
-	//motor.update(currTime);
-	//Serial.print ("... motor...");
+//	Serial.println("... accel...");
+	if(motor.motorState != STATE_COLLISION)
+	{
+		singer.update(currTime); 
+		dancer.update(currTime);
+	}
+	motor.update(currTime);
 	String outGoingMessage =processMessage(incomingMessage,currTime); 
 	return outGoingMessage;
   }
@@ -73,8 +75,18 @@ String RobotCmd::processMessage(String incomingMessage, long currTime)
 {
   char* msg = const_cast<char*>( incomingMessage.c_str());
 
+
+	
+  
   if(detectNewDanger(msg,currTime)){
     return String(DANGER);
+  }
+  
+  
+  if(accel.collision){
+   motor.setState(STATE_COLLISION);
+   accel.collision = false;
+   return "";
   }
   
  if( processDanger(currTime))
@@ -82,13 +94,14 @@ String RobotCmd::processMessage(String incomingMessage, long currTime)
 	return "";
  }
  
-  if(accel.collision){
-  Serial.println("process Collision");
-   motor.setState(STATE_COLLISION);
-   accel.collision = false;
-   return "";
+  
+  if(motor.motorState == STATE_COLLISION)
+  {
+		//when encountering a collision get us out of a jam before resuming all activities
+		return "";
   }
 
+  
   if(currState == RBT_IDLE && msg[0]==MARCO) //received marco
   {
     //Serial.println("process MARCO");
@@ -99,7 +112,7 @@ String RobotCmd::processMessage(String incomingMessage, long currTime)
   {
     //Serial.println("process POLO");
     currState = RBT_DANCE;
-    String newSong = singer.createSong(safeFeeling-10,safeFeeling+10);
+    String newSong = singer.createSong(safeFeeling,safeFeeling+20);
     String newDance =dancer.createDance();
     return String(SONG+newSong+DANCE+newDance);
   }
@@ -107,7 +120,6 @@ String RobotCmd::processMessage(String incomingMessage, long currTime)
  
   if(currState == RBT_WAIT_DANCE && msg[0]==SONG)
   {
-   
 
     String sSep(SONG);
     String dSep(DANCE);
@@ -120,29 +132,31 @@ String RobotCmd::processMessage(String incomingMessage, long currTime)
 	singer.playSong(const_cast<char*>(song+1));
 	dancer.performDance(const_cast<char*>(dance+1));
     currState = RBT_DANCE;
-	
     return "";
   }
 
   //we just finished dancing
   if(currState == RBT_DANCE)
   {
+
+  
 	if( !dancer.dancing && !singer.singing)
 	{
 		currState = RBT_IDLE;
 		freeTime = rand() *1000;//set the time before we connect to other robot
+		freeTime = freeTime<0?-1*freeTime:freeTime;
 	}
 	return "";
   }
 
  if(currState == RBT_IDLE)
  {
-
     if((currTime - freeTime )>  commandTimeout)
     { //see if robot is responding
       currState = RBT_WAIT_POLO;
       lastCommandSent = currTime;
-	  Serial.print(".");
+	  //determines the song we sing
+	  safeFeeling = safeFeeling< (singer.maxSafeFeeling-20)?safeFeeling+10:safeFeeling;
       return String(MARCO);
     }
  }
@@ -151,7 +165,8 @@ String RobotCmd::processMessage(String incomingMessage, long currTime)
   {
       currState = RBT_IDLE;
       lastCommandSent = currTime;
-      freeTime = rand() *500+currTime;
+      freeTime = abs(rand() *500+currTime);
+	  freeTime = freeTime<0?-1*freeTime:freeTime;
   }
  
   return "";
@@ -162,22 +177,25 @@ bool RobotCmd::processDanger(long currTime)
   bool processed = false;
   if(currState== RBT_DANGER )
   {
-    if((currTime - dangerTime) >dangerNear
-	&& motor.motorState == STATE_BACKWARD){ //1st stage after running away
-      motor.Stop();
-      motor.setState(STATE_IDLE);
-    }
-    if((currTime - dangerTime) >dangerCautious
-     	&& motor.motorState == STATE_IDLE){ //2nd stage creep back slowly
-	  motor.Stop();
-      motor.setState(STATE_FORWARD);
-    }
-    if((currTime - dangerTime) > dangerOver){ //3rd stage being playing
-      motor.setState(STATE_IDLE);
-      motor.Stop();
-      currState = RBT_IDLE;
-      //reset the wait for Marco - Polo to some random interval
-    }
+	  if(motor.motorSpeed != STATE_COLLISION)
+	  {
+		if((currTime - dangerTime) >dangerNear
+		&& motor.motorState == STATE_BACKWARD){ //1st stage after running away
+		  motor.Stop();
+		  motor.setState(STATE_IDLE);
+		}
+		if((currTime - dangerTime) >dangerCautious
+			&& motor.motorState == STATE_IDLE){ //2nd stage creep back slowly
+		  motor.Stop();
+		  motor.setState(STATE_FORWARD);
+		}
+		if((currTime - dangerTime) > dangerOver){ //3rd stage being playing
+		  motor.setState(STATE_IDLE);
+		  motor.Stop();
+		  currState = RBT_IDLE;
+		  //reset the wait for Marco - Polo to some random interval
+		}
+	}
     processed = true;
   }
   return processed;
@@ -197,6 +215,7 @@ bool RobotCmd::detectNewDanger(char* incomingMessage,long currTime)
       motor.setState(STATE_BACKWARD);
       currState = RBT_DANGER;
       dangerTime = currTime;
+	  safeFeeling = 0;
       return true;
     }
   }

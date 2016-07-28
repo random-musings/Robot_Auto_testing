@@ -26,15 +26,18 @@
 		return (*s == 0) ? NULL : s;
 	}
 
-
+	
+	
 	String Singer::createSong(int minValue,int maxValue)
 	{
 	  int currNote= 0;
 	  int noteIx;
 	  int durationSign=1;
 	  int noteSign = 1;
-	  String noteIxStr = "0";
+	  String noteIxStr ="0";
+	  noteIxStr.reserve(200);
 	  String durationStr="0";
+	  durationStr.reserve(200);
 	  for(int i=0;i<songLen;i++)
 	  {
 		if( currNote ==i)
@@ -45,20 +48,23 @@
 		}
 		noteIx += noteSign;
 		noteIx = noteIx<0|| noteIx>49? ((minValue+maxValue)/2) :noteIx; //reset if we went off the note array
-		noteIxBar[i] = noteIx;
-		noteIxStr = noteIxStr +delim+noteIx;
-		
-		int duration = millis();
-		durationSign = duration%2==0?1:-1;
-		duration = (duration +50 * durationSign)%700;
-		duration =  duration<50? 50:duration;  
+		noteIxBar[i] = noteIx;		
+		noteIxStr = noteIxStr+delim+String(noteIx);
+
+		int duration = rand() +millis();
+		duration = duration % 1000;
+		durationSign = duration%2==0?700:-700;
+		duration = duration +durationSign;
+		duration =  duration<50 ? 50:duration;  
 		durationBar[i] = duration;
-		durationStr = durationStr+delim+duration;
+		durationStr = durationStr+delim+String(duration);
 	  }
-	  String fullSong = noteIxStr+sep+durationStr;
+	
+	  String fullSong = String(noteIxStr)+sep+durationStr;
+	  fullSong.reserve(255);
 	  return fullSong.c_str();
 	}
-	
+
 	void Singer::playSong(char* newSong)
 	{
 			//load the song
@@ -80,6 +86,7 @@
 			noteIxBar[i] = noteIx;
 			durationBar[i] = pauseMillis;
 			i++;
+			
 		}
 
 		delete note;
@@ -103,12 +110,6 @@ void Singer::update(long currTime)
 	  {
 			if(currSongIx<songLen)
 			{
-			/*
-			   Serial.print(" zznote ");
-		Serial.print(noteIxBar[currSongIx]);
-		Serial.print("zz delay ");
-		Serial.println(durationBar[currSongIx]);
-		*/
 			 tone(buzzerPin,notes[noteIxBar[currSongIx]],durationBar[currSongIx]);
 			 lastPlay = currTime;
 			 currSongIx++;
@@ -118,6 +119,8 @@ void Singer::update(long currTime)
 			 }
 
 	  }
+	  
+	  
 	}
 	
 

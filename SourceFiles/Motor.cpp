@@ -17,6 +17,7 @@
 	wheel_last_change  = 0;
 	motorSpeed= FAST;
 	lastUpdate =0;
+	collisionAvoidanceTime = 3000;
 }
 
 
@@ -260,12 +261,12 @@ void Motor::setWheelState(int newState)
 
 void Motor::update(long currTime)
 {
-	
+
 	if( (currTime - lastUpdate) >10)
 	{
 		if(motorState == STATE_COLLISION){
-			motorState = ( currTime-state_last_change )> 3000
-				?STATE_FORWARD
+			motorState = ( currTime-state_last_change )> collisionAvoidanceTime
+				? STATE_FORWARD //auto set state to forward after 3 seconds
 				: STATE_COLLISION;
 			TurnRight(currTime);
 		}

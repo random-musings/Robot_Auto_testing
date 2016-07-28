@@ -21,7 +21,7 @@
 		delete dance;
 	}
 	
-	void Dancer::setup(Motor newMotor)
+	void Dancer::setup(Motor *newMotor)
 	{
 		motor = newMotor;
 	}
@@ -40,6 +40,7 @@
       prevAction = actionIx;
       while(prevAction== actionIx){
     		actionIx = rand() % actionLen+1;
+			actionIx = actionIx ==2?1:actionIx; //avoid the collision State
       }
        while(prevDuration== duration){
         duration = rand()%4+1;
@@ -56,7 +57,7 @@
 	
 	void Dancer::performDance(char* newDance)
 	{
-		if(strlen(dance)<actionLen){
+		if(strlen(newDance)<actionLen){
 			stop();
 			return;
 		}
@@ -68,7 +69,7 @@
 	
 	void Dancer::stop()
 	{
-		motor.setState(STATE_IDLE);
+		motor->setState(STATE_IDLE);
 		currDanceIx= danceLen*2 +1;
 		currPause =0;
 		dancing= false;
@@ -81,18 +82,15 @@ void Dancer::update(long currTime)
 	  {
 			if( (currDanceIx +1)<(danceLen*2))
 			{
-		
-			  char action= dance[currDanceIx];
-        int newMotorState = action=='1'?STATE_FORWARD
+				char action= dance[currDanceIx];
+				int newMotorState = action=='1'?STATE_FORWARD
                                     :action=='2'?STATE_COLLISION
                                     :action=='3'?STATE_TURN_RIGHT
                                     :action=='4'?STATE_TURN_LEFT
                                     :action=='5'?STATE_BACKWARD
                                     :STATE_IDLE;
-				motor.setState(newMotorState);
-        
-        
-        char dTime= dance[currDanceIx+1];
+				motor->setState(newMotorState);
+				char dTime= dance[currDanceIx+1];
 				currPause = dTime =='1'?1000
 				            :dTime=='2'
 				            ?2000
@@ -103,12 +101,13 @@ void Dancer::update(long currTime)
 				            :2500;
 				lastPlay = currTime;
 				
-        currDanceIx = currDanceIx+2;
-			 }else if (dancing){
-        stop();
+				currDanceIx = currDanceIx+2;
 			 }
-       
+			 else if (dancing)
+			 {
+				stop();
+			 }
 	  }
-	  motor.update(currTime);
+	  motor->update(currTime);
 	}
 	

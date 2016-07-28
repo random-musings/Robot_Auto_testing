@@ -15,14 +15,14 @@ class RoboAccelerometer
 		long lastReadShake;
 		long accelShakeTimeout;
 		Accelerometer acc;
-    double aX, aY, aZ;
+		double aX, aY, aZ;
 		double accel_center_x,accel_center_y,accel_center_z;
 		double angle_z;
 		bool collision;
-    bool attacked;
+		bool attacked;
 		bool moving;
 		bool accelAvail;
 		double collisionTolerance;
 		double movingTolerance;
-    double attackTolerance;
+		double attackTolerance;
 };

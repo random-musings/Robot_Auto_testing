@@ -11,18 +11,18 @@ class Dancer
 		~Dancer();
 		String createDance();
 		void performDance(char* newDance);
-		void setup(Motor newMotor);
+		void setup(Motor *newMotor);
 		void stop();
 		void update(long currTime);
     const int danceLen = 7;
     bool dancing;
     char* dance;
-    Motor motor;
-
+    Motor* motor;
+	const int actionLen =5;
 		protected:
 		const char* delim=",";
 		const char* sep=":";
-		const int actionLen =5;
+		
 
 
 

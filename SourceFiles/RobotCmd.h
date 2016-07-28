@@ -21,7 +21,7 @@ class RobotCmd{
 	RobotCmd();
 	
 	//MEssages
-	static const char MARCO ;
+	static const char MARCO;
 	static const char POLO;
 	static const char DANGER;
 	static const char DANCE;
@@ -48,12 +48,13 @@ class RobotCmd{
 	Singer singer; //pushes notes to piezo buzzer
 	Dancer dancer; //changes motor state so the robot can dance
 	Motor motor;
+
+	String processMessage(String incomingMessage, long currTime);
 	
 	protected:
 	char dir; //need to get rid of this once we figure out what to do when 
 	
 
-	String processMessage(String incomingMessage, long currTime);
 	bool detectNewDanger(char* incomingMessage,long currTime);
 	bool processDanger(long currTime);
 	

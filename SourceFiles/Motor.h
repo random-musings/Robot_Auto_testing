@@ -65,6 +65,7 @@ class Motor
 		int motorState;
 		int wheelState;
 		int motorSpeed;
+		long collisionAvoidanceTime;
 	
 		void Forward(int speed);
 		void Backward(int speed);
