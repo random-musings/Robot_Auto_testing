@@ -67,7 +67,7 @@ void setup() {
 	Serial.begin(9600);
 	radioReceiveSetup();
 	radioTransmitSetup();
-	robotcmd.setup(9); //buzzerPin
+	robotcmd.setup(33); //buzzerPin
   }
   
   
@@ -128,10 +128,10 @@ void setup() {
 		delay(100);
     robotcmd.update(millis(),"");
     Sang += note != robotcmd.singer.getCurrSongIx()?1:0;
-    Danced += motorState != robotcmd.motor.motorState?1:0;
+//    Danced += motorState != robotcmd.motor.motorState?1:0;
   }
   passed = passed 
-        && Danced >= (robotcmd.dancer.danceLen -1)
+        //&& Danced >= (robotcmd.dancer.danceLen -1)
         && Sang >= (robotcmd.singer.songLen-1)
         && robotcmd.currState == RBT_IDLE;
   Serial.println(passed?testPassed:testFailed);

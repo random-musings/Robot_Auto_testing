@@ -34,34 +34,35 @@
 	  int noteIx;
 	  int durationSign=1;
 	  int noteSign = 1;
-	  String noteIxStr ="0";
-	  noteIxStr.reserve(200);
-	  String durationStr="0";
-	  durationStr.reserve(200);
+	  String noteIxStr ="";
+	  noteIxStr.reserve(30);
+	  String durationStr="";
+	  durationStr.reserve(30);
+	  int startIx ='a';
+	  minValue = minValue<0?0:minValue;
+	  maxValue = maxValue> maxSafeFeeling?maxSafeFeeling-1:maxValue;
 	  for(int i=0;i<songLen;i++)
 	  {
 		if( currNote ==i)
 		{
-		  currNote = i+( rand()%5)+1;
+		  currNote = i+( rand()%3)+1;
 		  noteIx =  minValue + (rand() % maxValue); //keep song in lower bars if we had danger recently    
 		  noteSign = (noteIx %2 ==0)?1:-1;
 		}
 		noteIx += noteSign;
-		noteIx = noteIx<0|| noteIx>49? ((minValue+maxValue)/2) :noteIx; //reset if we went off the note array
+		noteIx = noteIx<0|| noteIx>(maxSafeFeeling -1)? ((minValue+maxValue)/2) :noteIx; //reset if we went off the note array
 		noteIxBar[i] = noteIx;		
-		noteIxStr = noteIxStr+delim+String(noteIx);
+		int val = startIx+noteIx;
+		noteIxStr += char(val);
 
-		int duration = rand() +millis();
-		duration = duration % 1000;
-		durationSign = duration%2==0?700:-700;
-		duration = duration +durationSign;
-		duration =  duration<50 ? 50:duration;  
+		int duration = ( rand() +millis()) % 4+1;
 		durationBar[i] = duration;
-		durationStr = durationStr+delim+String(duration);
+		durationStr += String(duration);
 	  }
 	
 	  String fullSong = String(noteIxStr)+sep+durationStr;
-	  fullSong.reserve(255);
+	  fullSong.reserve(30);
+	  
 	  return fullSong.c_str();
 	}
 
@@ -72,28 +73,24 @@
 		char * pauses = new char[2*songLen* sizeof(char)];
 		newSong=strwrd ( newSong,song,2*songLen* sizeof(char), const_cast<char*>(sep));
 		strwrd ( newSong,pauses,2*songLen* sizeof(char), const_cast<char*>(sep));
-	
 
-		char *note = new char[songLen];
-		char *noteHold = new char[songLen];
 		int i=0;
-		while(song !=NULL && pauses !=NULL)
+		int charIx ='a';
+		int zeroIx ='0';
+		while(i< songLen)
 		{
-			song = strwrd ( song,note,songLen* sizeof(char), const_cast<char*>(delim));
-			pauses= strwrd( pauses,noteHold,songLen* sizeof(char), const_cast<char*>(delim));
-			int noteIx = atoi(note);
-			int pauseMillis = atoi (noteHold);
+			int noteIx = (char)song[i] ;
+			noteIx = noteIx - charIx;
+			int pause = (char) pauses[i];
+			int pauseMillis = pause - zeroIx;
 			noteIxBar[i] = noteIx;
-			durationBar[i] = pauseMillis;
+			durationBar[i] = pauseMillis*200;
 			i++;
-			
 		}
-
-		delete note;
-		delete noteHold;
+		delete song;
+		delete pauses;
 		currSongIx =i<2?songLen:0;
 		singing = currSongIx ==0;
-
 	}
 
 	

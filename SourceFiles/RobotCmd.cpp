@@ -1,5 +1,4 @@
 #include "Arduino.h"
-
 #include "RobotCmd.h"
 
 //messages that can be sent/processed
@@ -35,7 +34,7 @@ RobotCmd::RobotCmd(){
 
 	stateChanged = 0;
 	currTimeout = 0;
-	safeFeeling=25;
+	safeFeeling=10;
 	freeTime =0;
 	lastCommandSent = 0; 
 }
@@ -56,16 +55,15 @@ void RobotCmd::setup(int buzzerPin) {
   
   String RobotCmd::update(long currTime,String incomingMessage )
   {
-//	Serial.print ("... accel...");
-//	accel.update(currTime);
-//	Serial.println("... accel...");
 	if(motor.motorState != STATE_COLLISION)
 	{
 		singer.update(currTime); 
 		dancer.update(currTime);
 	}
 	motor.update(currTime);
+	
 	String outGoingMessage =processMessage(incomingMessage,currTime); 
+	
 	return outGoingMessage;
   }
   
@@ -73,7 +71,8 @@ void RobotCmd::setup(int buzzerPin) {
   
 String RobotCmd::processMessage(String incomingMessage, long currTime)
 {
-  char* msg = const_cast<char*>( incomingMessage.c_str());
+
+ char* msg = const_cast<char*>( incomingMessage.c_str());
 
 
 	
@@ -102,7 +101,7 @@ String RobotCmd::processMessage(String incomingMessage, long currTime)
   }
 
   
-  if(currState == RBT_IDLE && msg[0]==MARCO) //received marco
+  if(currState != RBT_DANCE && msg[0]==MARCO) //received marco
   {
     //Serial.println("process MARCO");
     currState = RBT_WAIT_DANCE;
@@ -112,15 +111,14 @@ String RobotCmd::processMessage(String incomingMessage, long currTime)
   {
     //Serial.println("process POLO");
     currState = RBT_DANCE;
-    String newSong = singer.createSong(safeFeeling,safeFeeling+20);
-    String newDance =dancer.createDance();
+    String newSong = singer.createSong(safeFeeling,safeFeeling+10);
+    String newDance = "";//dancer.createDance(); //disbaled dance cause we can't hear RF signals with it
     return String(SONG+newSong+DANCE+newDance);
   }
   
  
   if(currState == RBT_WAIT_DANCE && msg[0]==SONG)
   {
-
     String sSep(SONG);
     String dSep(DANCE);
     
@@ -130,7 +128,7 @@ String RobotCmd::processMessage(String incomingMessage, long currTime)
     dance = strwrd ( msg,song,255* sizeof(char),dSep.c_str());
     //strip first char off of theDance and song and everything is correct; or handle it within the routine
 	singer.playSong(const_cast<char*>(song+1));
-	dancer.performDance(const_cast<char*>(dance+1));
+	//dancer.performDance(const_cast<char*>(dance+1));
     currState = RBT_DANCE;
     return "";
   }
@@ -156,7 +154,7 @@ String RobotCmd::processMessage(String incomingMessage, long currTime)
       currState = RBT_WAIT_POLO;
       lastCommandSent = currTime;
 	  //determines the song we sing
-	  safeFeeling = safeFeeling< (singer.maxSafeFeeling-20)?safeFeeling+10:safeFeeling;
+	  safeFeeling = safeFeeling< (singer.maxSafeFeeling-10)?safeFeeling+10:safeFeeling;
       return String(MARCO);
     }
  }
@@ -168,7 +166,7 @@ String RobotCmd::processMessage(String incomingMessage, long currTime)
       freeTime = abs(rand() *500+currTime);
 	  freeTime = freeTime<0?-1*freeTime:freeTime;
   }
- 
+
   return "";
 }
 
